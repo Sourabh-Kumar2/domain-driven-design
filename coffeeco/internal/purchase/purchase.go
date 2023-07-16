@@ -19,7 +19,7 @@ type Purchase struct {
 	total              money.Money
 	PaymentMeans       payment.Means
 	timeOfPurchase     time.Time
-	CardToken          *string
+	cardToken          *string
 }
 
 func (p *Purchase) validateAndEnrich() error {
@@ -59,7 +59,7 @@ func (s Service) CompletePurchase(ctx context.Context, purchase *Purchase) error
 	}
 	switch purchase.PaymentMeans {
 	case payment.MEANS_CARD:
-		if err := s.cardService.ChargeCard(ctx, purchase.total, *purchase.CardToken); err != nil {
+		if err := s.cardService.ChargeCard(ctx, purchase.total, *purchase.cardToken); err != nil {
 			return errors.New("card charge failed, cancelling purchase")
 		}
 	case payment.MEANS_CASH:
