@@ -39,7 +39,7 @@ func NewService(availability AvailabilityGetter) (*Service, error) {
 	return &Service{availability: availability}, nil
 }
 
-func (svc *Service) Get(ctx context.Context, tripStart time.Time, tripEnd time.Time, location string, budget money.Money) (*Recommendation, error) {
+func (svc *Service) Get(ctx context.Context, tripStart time.Time, tripEnd time.Time, location string, budget *money.Money) (*Recommendation, error) {
 	switch {
 	case tripStart.IsZero():
 		return nil, errors.New("trip start cannot be empty")
@@ -57,7 +57,7 @@ func (svc *Service) Get(ctx context.Context, tripStart time.Time, tripEnd time.T
 	var cheapestTrip *Option
 	for _, option := range opts {
 		price := option.PricePerNight.Multiply(int64(tripDuration))
-		if ok, _ := price.GreaterThan(&budget); ok {
+		if ok, _ := price.GreaterThan(budget); ok {
 			continue
 		}
 		if ok, _ := price.LessThan(lowestPrice); ok {
