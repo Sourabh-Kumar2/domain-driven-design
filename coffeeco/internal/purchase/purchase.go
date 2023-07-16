@@ -1,6 +1,7 @@
 package purchase
 
 import (
+	"context"
 	"errors"
 	"time"
 
@@ -35,5 +36,34 @@ func (p *Purchase) validateAndEnrich() error {
 	}
 	p.id = uuid.New()
 	p.timeOfPurchase = time.Now()
+	return nil
+}
+
+type CardChargeService interface {
+	ChargeCard(ctx context.Context, amount money.Money, cardToken string) error
+}
+
+type Service struct {
+	cardService  CardChargeService
+	purchaseRepo Repository
+}
+
+func (s Service) CompletePurchase(ctx context.Context, purchase *Purchase) error {
+	if err := purchase.validateAndEnrich(); err != nil {
+		return err
+	}
+	switch purchase.PaymentMeans {
+	case payment.MEANS_CARD:
+		if err := s.cardService.ChargeCard(ctx, purchase.total, *purchase.CardToken); err != nil {
+			return errors.New("card charge failed, cancelling purchase")
+		}
+	case payment.MEANS_CASH:
+	// TODO: For the reader to add :)
+	default:
+		return errors.New("unknown payment type")
+	}
+	if err := s.purchaseRepo.Store(ctx, *purchase); err != nil {
+		return errors.New("failed to store purchase")
+	}
 	return nil
 }
