@@ -43,8 +43,13 @@ type CardChargeService interface {
 	ChargeCard(ctx context.Context, amount money.Money, cardToken string) error
 }
 
+type CashChargeService interface {
+	CollectCash(ctx context.Context, amount money.Money) error
+}
+
 type Service struct {
 	cardService  CardChargeService
+	cashService  CashChargeService
 	purchaseRepo Repository
 }
 
@@ -58,7 +63,9 @@ func (s Service) CompletePurchase(ctx context.Context, purchase *Purchase) error
 			return errors.New("card charge failed, cancelling purchase")
 		}
 	case payment.MEANS_CASH:
-	// TODO: For the reader to add :)
+		if err := s.cashService.CollectCash(ctx, purchase.total); err != nil {
+			return errors.New("card charge failed, cancelling purchase")
+		}
 	default:
 		return errors.New("unknown payment type")
 	}
