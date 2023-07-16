@@ -1,6 +1,10 @@
 package loyalty
 
 import (
+	"context"
+	"errors"
+	"fmt"
+
 	"github.com/google/uuid"
 	"github.com/sourabh-kumar2/domain-driven-design/coffeeco/internal"
 	"github.com/sourabh-kumar2/domain-driven-design/coffeeco/internal/store"
@@ -12,4 +16,25 @@ type CoffeeBux struct {
 	coffeeLover                           coffeelover.CoffeeLover
 	FreeDrinksAvailable                   int
 	RemainingDrinkPurchasesUntilFreeDrink int
+}
+
+func (c *CoffeeBux) AddStamp() {
+	if c.RemainingDrinkPurchasesUntilFreeDrink == 1 {
+		c.RemainingDrinkPurchasesUntilFreeDrink = 10
+		c.FreeDrinksAvailable += 1
+	} else {
+		c.RemainingDrinkPurchasesUntilFreeDrink--
+	}
+}
+
+func (c *CoffeeBux) Pay(ctx context.Context, purchases []coffeelover.Product) error {
+	lp := len(purchases)
+	if lp == 0 {
+		return errors.New("nothing to buy")
+	}
+	if c.FreeDrinksAvailable < lp {
+		return fmt.Errorf("not enough coffeeBux to cover entire purchase. Have %d, need %d", len(purchases), c.FreeDrinksAvailable)
+	}
+	c.FreeDrinksAvailable = c.FreeDrinksAvailable - lp
+	return nil
 }
